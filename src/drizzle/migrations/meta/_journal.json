@@ -8,6 +8,13 @@
       "when": 1720435526823,
       "tag": "0000_soft_madame_web",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1720438494550,
+      "tag": "0001_left_magneto",
+      "breakpoints": true
     }
   ]
 }
