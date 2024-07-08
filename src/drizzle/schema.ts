@@ -20,7 +20,9 @@ export const UserTable = mysqlTable("users", {
 
 export const NamazTimeTable = mysqlTable("namaz_times", {
   id: int("id").autoincrement().primaryKey(),
-  user_id: int("user_id").references(() => UserTable.id),
+  user_id: int("user_id")
+    .references(() => UserTable.id)
+    .notNull(),
   date: date("date").notNull(),
   fajr_namaz: time("fajr_namaz").notNull(),
   fajr_jamat: time("fajr_jamat").notNull(),
