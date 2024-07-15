@@ -58,7 +58,7 @@ userRouter.post("/upload", upload.single("file"), async (req, res) => {
       const formattedDate = ExcelDateToJSDate(value[0])
         .toISOString()
         .split("T", 1)[0];
-
+      console.log(formattedDate);
       console.log(typeof value[0]);
       await db.insert(NamazTimeTable).values({
         user_id: 1,

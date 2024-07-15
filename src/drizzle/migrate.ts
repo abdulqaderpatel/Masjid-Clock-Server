@@ -7,6 +7,7 @@ async function migrate() {
     user: "user",
     database: "MasjidClock",
     password: "P@ssW0rd",
+    dateStrings: true,
   });
 
   const db = drizzle(connection);

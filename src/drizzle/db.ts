@@ -7,5 +7,6 @@ const poolConnection = mysql.createPool({
   user: "user",
   database: "MasjidClock",
   password: "P@ssW0rd",
+  dateStrings: true,
 });
 export const db = drizzle(poolConnection, { schema, mode: "default" });

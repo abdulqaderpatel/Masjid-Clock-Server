@@ -23,7 +23,7 @@ export const NamazTimeTable = mysqlTable("namaz_times", {
   user_id: int("user_id")
     .references(() => UserTable.id)
     .notNull(),
-  date: date("date").notNull(),
+  date: date("date", { mode: "date" }).notNull(),
   fajr_namaz: time("fajr_namaz").notNull(),
   fajr_jamat: time("fajr_jamat").notNull(),
   zuhr_namaz: time("zuhr_namaz").notNull(),
