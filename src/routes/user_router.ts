@@ -9,7 +9,9 @@ import bodyParser from "body-parser";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { format } from "path";
-
+import  * as nodemailer from 'nodemailer';
+import exp from "constants";
+import * as jwt from 'jsonwebtoken';
 const upload = multer({ dest: "uploads/" });
 const userRouter = express.Router();
 
@@ -37,8 +39,50 @@ userRouter.post("/register", async (req: Request, res: Response) => {
     city,
   });
 
+  const smtpTransport = nodemailer.createTransport({
+    service: "Gmail",
+    auth: {
+        user: "abdulqaderpatel2002@gmail.com ",
+        pass: "whhy iwjf ypco tnlp"
+    }
+});
+
+const   emailToken=jwt.sign({
+  name,
+  email,
+  password: hashedPassword,
+  address,
+  country,
+  state,
+  city,
+},process.env.SECRET_KEY);
+
+console.log(emailToken);
+
+const url=`http://localhost:3001/user/email/confirm/${emailToken}`;
+
+const result =  smtpTransport.sendMail({
+  from: 'abdulqaderpatel2002@gmail.com',
+  to: email,
+  subject: 'this is not wokring but ok',
+  html:`<p>Click on the link below to verify</p><br><a href="${url}">${url}</a>`
+});
+
+
   res.status(201).json("user created successfully");
 });
+
+userRouter.post("/login",async(req,res)=>{
+  return res.json("user logged in successfully")
+})
+
+userRouter.get("/email/confirm/:token",async(req,res)=>{
+  const user=jwt.verify(req.params.token,process.env.SECRET_KEY);
+  console.log(user);
+  
+  return res.redirect("http://localhost:5173/signup");
+})
+
 function ExcelDateToJSDate(date) {
   return new Date(Math.round((date - 25569) * 86400 * 1000));
 }

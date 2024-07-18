@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1720435526823,
-      "tag": "0000_soft_madame_web",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1720438494550,
-      "tag": "0001_left_magneto",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1720447592883,
-      "tag": "0002_purple_galactus",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1720455540180,
-      "tag": "0003_steady_iceman",
+      "when": 1721314291506,
+      "tag": "0000_chunky_earthquake",
       "breakpoints": true
     }
   ]

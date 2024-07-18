@@ -1,4 +1,5 @@
 import {
+  boolean,
   date,
   datetime,
   int,
@@ -16,6 +17,7 @@ export const UserTable = mysqlTable("users", {
   country: varchar("country", { length: 255 }),
   state: varchar("state", { length: 255 }),
   city: varchar("city", { length: 255 }),
+  isVerified:boolean("isVerified").default(false)
 });
 
 export const NamazTimeTable = mysqlTable("namaz_times", {
