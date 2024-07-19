@@ -1,7 +1,7 @@
 import { eq, gt, gte, lt, lte, param } from "drizzle-orm";
 import express from "express";
 import { db } from "../drizzle/db";
-import { NamazTimeTable, UserTable } from "../drizzle/schema";
+import { NamazTable, UserTable } from "../drizzle/schema";
 import { log } from "console";
 import { deepEqual, strictEqual } from "assert";
 
@@ -47,9 +47,9 @@ namazRouter.get("/date/:date", async (req, res) => {
 
   log(userDate > endOfDay);
 
-  let dateData = await db.query.NamazTimeTable.findFirst({
+  let dateData = await db.query.NamazTable.findFirst({
     where:
-      lt(NamazTimeTable.date, endOfDay) && gte(NamazTimeTable.date, startOfDay),
+      lt(NamazTable.date, endOfDay) && gte(NamazTable.date, startOfDay),
   });
 
   console.log(dateData?.date.toUTCString());

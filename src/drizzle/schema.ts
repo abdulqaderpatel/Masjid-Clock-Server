@@ -1,12 +1,26 @@
 import {
   boolean,
   date,
-  datetime,
   int,
   mysqlTable,
   time,
+  timestamp,
   varchar,
 } from "drizzle-orm/mysql-core";
+
+export const MasjidTable = mysqlTable("masjids", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  password: varchar("password", { length: 255 }).notNull(),
+  address: varchar("address", { length: 255 }).notNull(),
+  country: varchar("country", { length: 255 }),
+  state: varchar("state", { length: 255 }),
+  city: varchar("city", { length: 255 }),
+  isVerified:boolean("isVerified").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt:timestamp("updated_at").defaultNow().onUpdateNow()
+});
 
 export const UserTable = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -17,13 +31,15 @@ export const UserTable = mysqlTable("users", {
   country: varchar("country", { length: 255 }),
   state: varchar("state", { length: 255 }),
   city: varchar("city", { length: 255 }),
-  isVerified:boolean("isVerified").default(false)
+  isVerified:boolean("isVerified").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt:timestamp("updated_at").defaultNow().onUpdateNow()
 });
 
-export const NamazTimeTable = mysqlTable("namaz_times", {
+export const NamazTable = mysqlTable("namaz", {
   id: int("id").autoincrement().primaryKey(),
   user_id: int("user_id")
-    .references(() => UserTable.id)
+    .references(() => MasjidTable.id)
     .notNull(),
   date: date("date", { mode: "date" }).notNull(),
   fajr_namaz: time("fajr_namaz").notNull(),
@@ -36,4 +52,6 @@ export const NamazTimeTable = mysqlTable("namaz_times", {
   maghrib_jamat: time("maghrib_jamat").notNull(),
   isha_namaz: time("isha_namaz").notNull(),
   isha_jamat: time("isha_jamat").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt:timestamp("updated_at").defaultNow().onUpdateNow()
 });
