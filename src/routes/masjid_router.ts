@@ -1,89 +1,113 @@
-// @ts-nocheck
 import { Router } from "express";
 import express, { Request, Response } from "express";
 import { db } from ".././drizzle/db";
-import { NamazTimeTable, MasjidTable } from ".././drizzle/schema";
+import { NamazTable, MasjidTable } from ".././drizzle/schema";
 import multer from "multer";
 import xlsx from "xlsx";
-import bodyParser from "body-parser";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
-import { format } from "path";
-import  * as nodemailer from 'nodemailer';
-import exp from "constants";
-import * as jwt from 'jsonwebtoken';
+import * as nodemailer from "nodemailer";
+import * as jwt from 'jsonwebtoken'
+import createResponse from "../models/CreateResponse";
+import { log } from "console";
+import verifyJWT from "../utils/jwt_authentication";
 const upload = multer({ dest: "uploads/" });
 const masjidRouter = express.Router();
 
-masjidRouter.post("/register", async (req: Request, res: Response) => {
+masjidRouter.post('/register', async (req: Request, res: Response) => {
   const { name, email, password, address, country, state, city } = req.body;
-  // Check if the user already exists
 
-  const userExists = await db.query.MasjidTable.findFirst({
-    where: eq(MasjidTable.email, email),
-  });
+  try {
+    const userExists = await db.query.MasjidTable.findFirst({
+      where: eq(MasjidTable.email, email), // Assuming this is the correct way to check email in your ORM
+    });
 
-  if (userExists) {
-    return res.status(400).json({ errors: [{ msg: "User already exists" }] });
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  await db.insert(MasjidTable).values({
-    name,
-    email,
-    password: hashedPassword,
-    address,
-    country,
-    state,
-    city,
-  });
-
-  const smtpTransport = nodemailer.createTransport({
-    service: "Gmail",
-    auth: {
-        user: "abdulqaderpatel2002@gmail.com ",
-        pass: "whhy iwjf ypco tnlp"
+    if (userExists) {
+      throw Error("A user with this email already exists")
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await db.insert(MasjidTable).values({
+      name,
+      email,
+      password: hashedPassword,
+      address,
+      country,
+      state,
+      city,
+    });
+
+    const smtpTransport = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const emailToken = jwt.sign(
+      {
+        name,
+        email,
+        password: hashedPassword,
+        address,
+        country,
+        state,
+        city,
+      },
+      process.env.SECRET_KEY,
+      { expiresIn: '1h' }
+    );
+
+    const url = `http://localhost:3001/user/email/confirm/${emailToken}`;
+
+    smtpTransport.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Verify your email',
+      html: `<p>Click on the link below to verify</p><br><a href="${url}">${url}</a>`,
+    });
+
+    res.status(201).json(
+      createResponse({
+        message: 'User created successfully',
+        data: emailToken,
+      })
+    );
+  } catch (error: any) {
+    return res.status(400).json(
+      createResponse({
+
+        message: error.message,
+        data: {},
+      })
+    );
+
+  }
 });
 
-const   emailToken=jwt.sign({
-  name,
-  email,
-  password: hashedPassword,
-  address,
-  country,
-  state,
-  city,
-},process.env.SECRET_KEY);
+masjidRouter.post("/timepass", verifyJWT, async (req, res) => {
 
-console.log(emailToken);
 
-const url=`http://localhost:3001/user/email/confirm/${emailToken}`;
 
-const result =  smtpTransport.sendMail({
-  from: 'abdulqaderpatel2002@gmail.com',
-  to: email,
-  subject: 'this is not wokring but ok',
-  html:`<p>Click on the link below to verify</p><br><a href="${url}">${url}</a>`
+
+
+  return res.json("data posted successfully")
 });
 
-
-  res.status(201).json("user created successfully");
+masjidRouter.post("/login", async (req, res) => {
+  return res.json("user logged in successfully");
 });
 
-masjidRouter.post("/login",async(req,res)=>{
-  return res.json("user logged in successfully")
-})
-
-masjidRouter.get("/email/confirm/:token",async(req,res)=>{
-  const user=jwt.verify(req.params.token,process.env.SECRET_KEY);
+masjidRouter.get("/email/confirm/:token", async (req, res) => {
+  const user = jwt.verify(req.params.token, process.env.SECRET_KEY);
   console.log(user);
-  
-  return res.redirect("http://localhost:5173/signup");
-})
 
-function ExcelDateToJSDate(date) {
+  return res.redirect("http://localhost:5173/signup");
+});
+
+function ExcelDateToJSDate(date: any) {
   return new Date(Math.round((date - 25569) * 86400 * 1000));
 }
 
@@ -92,19 +116,19 @@ masjidRouter.post("/upload", upload.single("file"), async (req, res) => {
     return res.status(400).send("No file uploaded.");
   }
 
-  const workbook = xlsx.readFile(req.file.path);
-  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  const workbook: any = xlsx.readFile(req.file.path);
+  const worksheet: any = workbook.Sheets[workbook.SheetNames[0]];
   console.log(workbook);
-  let data = xlsx.utils.sheet_to_json(worksheet, { header: 1 }).slice(1);
+  let data: any = xlsx.utils.sheet_to_json(worksheet, { header: 1 }).slice(1);
 
   try {
-    data.forEach(async (value, index, array) => {
-      const formattedDate = ExcelDateToJSDate(value[0])
+    data.forEach(async (value: any, index: any, array: any) => {
+      const formattedDate: any = ExcelDateToJSDate(value[0])
         .toISOString()
         .split("T", 1)[0];
       console.log(formattedDate);
       console.log(typeof value[0]);
-      await db.insert(NamazTimeTable).values({
+      await db.insert(NamazTable).values({
         user_id: 1,
         date: formattedDate, // Default date if not provided
         fajr_namaz: value[1].toString(),
