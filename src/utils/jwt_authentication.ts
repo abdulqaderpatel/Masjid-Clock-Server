@@ -1,20 +1,23 @@
-import express, { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken'
-export default function verifyJWT(req: Request, res: Response, next: NextFunction) {
-    var token: any = req.headers["auth-token"];
+import express, { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+export default function verifyJWT(
+    req: Request,
+    res: Response,
+    next: NextFunction
+) {
+    var token: any = req.headers["auth-token"]?.toString().split(" ")[1];
+
+    console.log(token);
 
     if (token) {
-        jwt.verify(token, process.env.SECRET_KEY, ((err: any, decoded: any) => {
+        jwt.verify(token, process.env.SECRET_KEY, (err: any, decoded: any) => {
             if (err) {
-                return res.json({ message: "unauthorized access" })
+                return res.json({ message: "unauthorized access" });
             }
-        }));
+        });
 
-        next()
-
-    }
-
-    else {
+        next();
+    } else {
         return res.json({ message: "forbidden access" });
     }
 }

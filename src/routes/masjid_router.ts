@@ -1,7 +1,6 @@
-import { Router } from "express";
 import express, { Request, Response } from "express";
 import { db } from ".././drizzle/db";
-import { NamazTable, MasjidTable } from ".././drizzle/schema";
+import { NamazTable, MasjidTable, UserTable } from ".././drizzle/schema";
 import multer from "multer";
 import xlsx from "xlsx";
 import bcrypt from "bcrypt";
@@ -9,8 +8,7 @@ import { eq } from "drizzle-orm";
 import * as nodemailer from "nodemailer";
 import * as jwt from 'jsonwebtoken'
 import createResponse from "../models/CreateResponse";
-import { log } from "console";
-import verifyJWT from "../utils/jwt_authentication";
+
 const upload = multer({ dest: "uploads/" });
 const masjidRouter = express.Router();
 
@@ -28,7 +26,7 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await db.insert(MasjidTable).values({
+    const user = await db.insert(MasjidTable).values({
       name,
       email,
       password: hashedPassword,
@@ -36,7 +34,8 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
       country,
       state,
       city,
-    });
+    })
+    const id = user[0].insertId;
 
     const smtpTransport = nodemailer.createTransport({
       service: 'Gmail',
@@ -46,11 +45,14 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
       },
     });
 
+    console.log("timepas");
+
+
     const emailToken = jwt.sign(
       {
+        id,
         name,
         email,
-        password: hashedPassword,
         address,
         country,
         state,
@@ -60,7 +62,7 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
       { expiresIn: '1h' }
     );
 
-    const url = `http://localhost:3001/user/email/confirm/${emailToken}`;
+    const url = `http://localhost:3001/api/masjid/email/confirm/${emailToken}`;
 
     smtpTransport.sendMail({
       from: process.env.EMAIL_USER,
@@ -87,22 +89,21 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
   }
 });
 
-masjidRouter.post("/timepass", verifyJWT, async (req, res) => {
-
-
-
-
-
-  return res.json("data posted successfully")
-});
 
 masjidRouter.post("/login", async (req, res) => {
   return res.json("user logged in successfully");
 });
 
 masjidRouter.get("/email/confirm/:token", async (req, res) => {
-  const user = jwt.verify(req.params.token, process.env.SECRET_KEY);
-  console.log(user);
+  const user: any = jwt.verify(req.params.token, process.env.SECRET_KEY);
+
+  if (!user) {
+    return res.status(400).json(createResponse({
+      message: "Forbidden access", data: {}
+    }))
+  }
+
+  await db.update(MasjidTable).set({ isVerified: true }).where(eq(MasjidTable.id, user.id));
 
   return res.redirect("http://localhost:5173/signup");
 });
