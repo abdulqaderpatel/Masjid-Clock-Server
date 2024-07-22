@@ -2,8 +2,6 @@ import { eq, gt, gte, lt, lte, param } from "drizzle-orm";
 import express from "express";
 import { db } from "../drizzle/db";
 import { NamazTable, UserTable } from "../drizzle/schema";
-import { log } from "console";
-import { deepEqual, strictEqual } from "assert";
 
 const namazRouter = express.Router();
 
@@ -44,8 +42,6 @@ namazRouter.get("/date/:date", async (req, res) => {
 
   console.log(startOfDay);
   console.log(endOfDay);
-
-  log(userDate > endOfDay);
 
   let dateData = await db.query.NamazTable.findFirst({
     where:

@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import * as nodemailer from "nodemailer";
 import * as jwt from 'jsonwebtoken'
 import createResponse from "../models/CreateResponse";
+import verifyJWT from "../utils/jwt_authentication";
 
 const upload = multer({ dest: "uploads/" });
 const masjidRouter = express.Router();
@@ -59,7 +60,7 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
         city,
       },
       process.env.SECRET_KEY,
-      { expiresIn: '1h' }
+      { expiresIn: '1d' }
     );
 
     const url = `http://localhost:3001/api/masjid/email/confirm/${emailToken}`;
@@ -105,8 +106,39 @@ masjidRouter.get("/email/confirm/:token", async (req, res) => {
 
   await db.update(MasjidTable).set({ isVerified: true }).where(eq(MasjidTable.id, user.id));
 
-  return res.redirect("http://localhost:5173/signup");
+  return res.status(200).redirect("http://localhost:5173/signup");
 });
+
+masjidRouter.get("/isVerified", verifyJWT, async (req, res) => {
+
+
+  const token: any = req.headers["auth-token"]?.toString().split(" ")[1]
+
+  console.log(token);
+
+  const userId: any = jwt.verify(token, process.env.SECRET_KEY);
+
+  console.log(userId.id);
+
+  const userIsVerified = await db.query.MasjidTable.findFirst({ where: eq(MasjidTable.id, userId.id) });
+
+  console.log(userIsVerified);
+
+
+  if (userIsVerified?.isVerified) {
+    return res.status(200).json(createResponse({
+      message: "User email is verified", data: {
+
+      }
+    }))
+  }
+
+  return res.status(400).json(createResponse({
+    message: "User email is not verified", data: {
+
+    }
+  }))
+})
 
 function ExcelDateToJSDate(date: any) {
   return new Date(Math.round((date - 25569) * 86400 * 1000));
