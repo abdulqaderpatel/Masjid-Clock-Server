@@ -36,6 +36,9 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
       state,
       city,
     })
+
+    console.log(user);
+
     const id = user[0].insertId;
 
     const smtpTransport = nodemailer.createTransport({
@@ -58,6 +61,8 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
         country,
         state,
         city,
+        isVerified: false
+
       },
       process.env.SECRET_KEY,
       { expiresIn: '1d' }
@@ -72,7 +77,7 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
       html: `<p>Click on the link below to verify</p><br><a href="${url}">${url}</a>`,
     });
 
-    res.status(201).json(
+    return res.status(201).json(
       createResponse({
         message: 'User created successfully',
         data: emailToken,
@@ -114,11 +119,7 @@ masjidRouter.get("/isVerified", verifyJWT, async (req, res) => {
 
   const token: any = req.headers["auth-token"]?.toString().split(" ")[1]
 
-  console.log(token);
-
   const userId: any = jwt.verify(token, process.env.SECRET_KEY);
-
-  console.log(userId.id);
 
   const userIsVerified = await db.query.MasjidTable.findFirst({ where: eq(MasjidTable.id, userId.id) });
 
@@ -145,6 +146,14 @@ function ExcelDateToJSDate(date: any) {
 }
 
 masjidRouter.post("/upload", upload.single("file"), async (req, res) => {
+
+  const { id } = req.body;
+
+  if (!id) {
+    return res.status(400).send("id is requried");
+  }
+
+
   if (!req.file) {
     return res.status(400).send("No file uploaded.");
   }
@@ -162,7 +171,7 @@ masjidRouter.post("/upload", upload.single("file"), async (req, res) => {
       console.log(formattedDate);
       console.log(typeof value[0]);
       await db.insert(NamazTable).values({
-        user_id: 1,
+        user_id: id,
         date: formattedDate, // Default date if not provided
         fajr_namaz: value[1].toString(),
         fajr_jamat: value[2].toString(),

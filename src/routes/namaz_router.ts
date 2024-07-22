@@ -1,4 +1,4 @@
-import { eq, gt, gte, lt, lte, param } from "drizzle-orm";
+import { eq, gte, lt, } from "drizzle-orm";
 import express from "express";
 import { db } from "../drizzle/db";
 import { NamazTable, UserTable } from "../drizzle/schema";
@@ -11,8 +11,9 @@ function adjustForTimezone(date: Date): Date {
   return date;
 }
 
-namazRouter.get("/date/:date", async (req, res) => {
-  const { date } = req.params;
+namazRouter.get("/user/:id/date/:date", async (req, res) => {
+  const { date, id } = req.params;
+
 
   const userDate = adjustForTimezone(new Date());
 
@@ -45,7 +46,7 @@ namazRouter.get("/date/:date", async (req, res) => {
 
   let dateData = await db.query.NamazTable.findFirst({
     where:
-      lt(NamazTable.date, endOfDay) && gte(NamazTable.date, startOfDay),
+      lt(NamazTable.date, endOfDay) && gte(NamazTable.date, startOfDay) && eq(NamazTable.user_id, Number.parseInt(id)),
   });
 
   console.log(dateData?.date.toUTCString());
