@@ -18,7 +18,7 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
 
   try {
     const userExists = await db.query.MasjidTable.findFirst({
-      where: eq(MasjidTable.email, email), // Assuming this is the correct way to check email in your ORM
+      where: eq(MasjidTable.email, email),
     });
 
     if (userExists) {
@@ -111,7 +111,7 @@ masjidRouter.get("/email/confirm/:token", async (req, res) => {
 
   await db.update(MasjidTable).set({ isVerified: true }).where(eq(MasjidTable.id, user.id));
 
-  return res.status(200).redirect("http://localhost:5173/signup");
+  return res.status(200).redirect(process.env.EMAIL_VERIFY_REDIRECT_LINK);
 });
 
 masjidRouter.get("/isVerified", verifyJWT, async (req, res) => {

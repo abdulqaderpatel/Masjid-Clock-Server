@@ -5,7 +5,11 @@ declare global {
       PORT: number;
       SECRET_KEY: string,
       EMAIL_USER: string,
-      EMAIL_PASS: string
+      EMAIL_PASS: string,
+      DB_HOST: string,
+      DB_USER: string,
+      DB_DATABASE: string,
+      DB_PASSWORD: string
     }
   }
 }

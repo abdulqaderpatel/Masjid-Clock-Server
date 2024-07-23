@@ -1,5 +1,7 @@
 import { Config, defineConfig } from "drizzle-kit";
 
+import "dotenv/config";
+
 export default defineConfig({
   schema: "./src/drizzle/schema.ts",
   out: "./src/drizzle/migrations",
@@ -7,9 +9,9 @@ export default defineConfig({
   strict: true,
   dialect: "mysql",
   dbCredentials: {
-    host: "localhost",
-    user: "user",
-    database: "MasjidClock",
-    password: "P@ssW0rd",
+    host: process.env.HOST || "",
+    user: process.env.USER || "",
+    database: process.env.DB_DATABASE || "",
+    password: process.env.DB_PASSWORD
   },
 });
