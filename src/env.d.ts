@@ -10,6 +10,7 @@ declare global {
       DB_USER: string,
       DB_DATABASE: string,
       DB_PASSWORD: string
+      EMAIL_VERIFY_REDIRECT_LINK: string
     }
   }
 }
