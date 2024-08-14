@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
-import { db } from ".././drizzle/db";
-import { NamazTable, MasjidTable, UserTable } from ".././drizzle/schema";
+import { db } from "../drizzle/db";
+import { NamazTable, MasjidTable, UserTable } from "../drizzle/schema";
 import multer from "multer";
 import xlsx from "xlsx";
 import bcrypt from "bcrypt";
@@ -13,6 +13,8 @@ import verifyJWT from "../utils/jwt_authentication";
 const upload = multer({ dest: "uploads/" });
 const masjidRouter = express.Router();
 
+
+//register the masjid
 masjidRouter.post('/register', async (req: Request, res: Response) => {
   const { name, email, password, address, country, state, city } = req.body;
 
@@ -96,6 +98,8 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
 });
 
 
+
+//login the masjid
 masjidRouter.post("/login", async (req, res) => {
   return res.json("user logged in successfully");
 });
