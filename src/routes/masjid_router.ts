@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { db } from "../drizzle/db";
-import { NamazTable, MasjidTable, UserTable } from "../drizzle/schema";
+import { NamazTable, MasjidTable,} from "../drizzle/schema";
 import multer from "multer";
 import xlsx from "xlsx";
 import bcrypt from "bcrypt";
@@ -100,8 +100,81 @@ masjidRouter.post('/register', async (req: Request, res: Response) => {
 
 
 //login the masjid
-masjidRouter.post("/login", async (req, res) => {
-  return res.json("user logged in successfully");
+masjidRouter.post('/login', async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  try {
+    // Check if the user exists
+    const masjid = await db.query.MasjidTable.findFirst({
+      where: eq(MasjidTable.email, email),
+    });
+
+    if (!masjid) {
+      return res.status(404).json(
+          createResponse({
+            message: 'Masjid with this email does not exist',
+            data: {},
+          })
+      );
+    }
+
+    // Compare the hashed password
+    const passwordMatch = await bcrypt.compare(password, masjid.password);
+
+    if (!passwordMatch) {
+      return res.status(401).json(
+          createResponse({
+            message: 'Invalid credentials',
+            data: {},
+          })
+      );
+    }
+
+    // Check if the email is verified
+    if (!masjid.isVerified) {
+      return res.status(401).json(
+          createResponse({
+            message: 'Email is not verified. Please verify your email.',
+            data: {},
+          })
+      );
+    }
+
+
+
+    // Generate a JWT token
+    const emailToken = jwt.sign(
+        {
+          id:masjid.id,
+          name:masjid.name,
+          email:email.name,
+          address:masjid.address,
+          country:masjid.country,
+          state:masjid.state,
+          city:masjid.city,
+          isVerified:masjid.isVerified
+
+        },
+        process.env.SECRET_KEY,
+        { expiresIn: '1d' }
+    );
+
+
+
+    return res.status(200).json(
+        createResponse({
+          message: 'Login successful',
+          data: emailToken,
+        })
+    );
+  } catch (error: any) {
+    return res.status(500).json(
+        createResponse({
+          message: error.message,
+          data: {},
+        })
+    );
+  }
 });
 
 masjidRouter.get("/email/confirm/:token", async (req, res) => {
@@ -168,7 +241,7 @@ masjidRouter.post("/upload", upload.single("file"), async (req, res) => {
   let data: any = xlsx.utils.sheet_to_json(worksheet, { header: 1 }).slice(1);
 
   try {
-    data.forEach(async (value: any, index: any, array: any) => {
+    for (const value of data) {
       const formattedDate: any = ExcelDateToJSDate(value[0])
         .toISOString()
         .split("T", 1)[0];
@@ -188,8 +261,8 @@ masjidRouter.post("/upload", upload.single("file"), async (req, res) => {
         isha_namaz: value[9].toString(),
         isha_jamat: value[10].toString(),
       });
-    });
-    return res.send("Data uploaded");
+    }
+      return res.send("Data uploaded");
   } catch (e) {
     return res.send("some error occured");
   }
