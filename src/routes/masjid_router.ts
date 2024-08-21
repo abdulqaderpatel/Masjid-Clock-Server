@@ -310,4 +310,15 @@ masjidRouter.post("/upload", upload.single("file"), async (req, res) => {
     }
 });
 
+
+masjidRouter.get("/isMasjid/:email", async (req, res) => {
+
+    const masjid = await db.query.MasjidTable.findFirst({
+        where: eq(MasjidTable.email, req.params.email),
+    });
+
+    return res.status(200).json({'data': masjid != null});
+
+
+})
 export default masjidRouter;
