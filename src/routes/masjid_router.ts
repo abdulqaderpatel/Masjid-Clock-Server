@@ -1,10 +1,10 @@
-import express, {Request, Response} from "express";
+import express, {Request, response, Response} from "express";
 import {db} from "../drizzle/db";
 import {NamazTable, MasjidTable, UserTable,} from "../drizzle/schema";
 import multer from "multer";
 import xlsx from "xlsx";
 import bcrypt from "bcrypt";
-import {eq} from "drizzle-orm";
+import {eq, like} from "drizzle-orm";
 import * as nodemailer from "nodemailer";
 import * as jwt from 'jsonwebtoken'
 import createResponse from "../models/CreateResponse";
@@ -320,5 +320,28 @@ masjidRouter.get("/isMasjid/:email", async (req, res) => {
     return res.status(200).json({'data': masjid != null});
 
 
-})
+});
+
+
+masjidRouter.get("/:masjidText", async (req, res) => {
+    try {
+        const masjidList = await db.query.MasjidTable.findMany({
+            where: like(MasjidTable.name, `%${req.params.masjidText}%`)
+        });
+
+        if (masjidList.length === 0) {
+            return res.status(400).json(createResponse({
+                message: "No masjids exist with this name", data: null
+            }));
+        }
+
+        return res.json(createResponse({message: "Retrieved masjids successfully", data: masjidList}));
+    } catch (error) {
+        console.error("Error fetching masjids:", error);
+        return res.status(500).json(createResponse({
+            message: "An error occurred while retrieving masjids", data: null
+        }));
+    }
+});
+
 export default masjidRouter;
