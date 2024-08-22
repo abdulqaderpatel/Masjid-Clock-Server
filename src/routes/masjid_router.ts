@@ -339,7 +339,7 @@ masjidRouter.get("/:masjidText", async (req, res) => {
     } catch (error) {
         console.error("Error fetching masjids:", error);
         return res.status(500).json(createResponse({
-            message: "An error occurred while retrieving masjids", data: null
+            message: "An error occurred while retrieving masjids", data: []
         }));
     }
 });

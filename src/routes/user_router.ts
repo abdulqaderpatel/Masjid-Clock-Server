@@ -1,22 +1,22 @@
-import express, { Request, Response } from "express";
-import { db } from "../drizzle/db";
-import { UserTable} from "../drizzle/schema";
+import express, {Request, Response} from "express";
+import {db} from "../drizzle/db";
+import {UserTable} from "../drizzle/schema";
 import multer from "multer";
 import xlsx from "xlsx";
 import bcrypt from "bcrypt";
-import { eq } from "drizzle-orm";
+import {eq} from "drizzle-orm";
 import * as nodemailer from "nodemailer";
 import * as jwt from 'jsonwebtoken'
 import createResponse from "../models/CreateResponse";
 import verifyJWT from "../utils/jwt_authentication";
 
-const upload = multer({ dest: "uploads/" });
+const upload = multer({dest: "uploads/"});
 const userRouter = express.Router();
 
 
 //register the user
 userRouter.post('/register', async (req: Request, res: Response) => {
-    const { name, email, password, address, country, state, city } = req.body;
+    const {name, email, password, address, country, state, city} = req.body;
 
     try {
         const userExists = await db.query.UserTable.findFirst({
@@ -68,7 +68,7 @@ userRouter.post('/register', async (req: Request, res: Response) => {
 
             },
             process.env.SECRET_KEY,
-            { expiresIn: '1d' }
+            {expiresIn: '1d'}
         );
 
         const url = `http://localhost:3001/api/user/email/confirm/${emailToken}`;
@@ -99,10 +99,9 @@ userRouter.post('/register', async (req: Request, res: Response) => {
 });
 
 
-
 //login the user
 userRouter.post('/login', async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    const {email, password} = req.body;
 
     try {
         // Check if the user exists
@@ -142,24 +141,22 @@ userRouter.post('/login', async (req: Request, res: Response) => {
         }
 
 
-
         // Generate a JWT token
         const emailToken = jwt.sign(
             {
-                id:user.id,
-                name:user.name,
-                email:email.name,
-                address:user.address,
-                country:user.country,
-                state:user.state,
-                city:user.city,
-                isVerified:user.isVerified
+                id: user.id,
+                name: user.name,
+                email: email.name,
+                address: user.address,
+                country: user.country,
+                state: user.state,
+                city: user.city,
+                isVerified: user.isVerified
 
             },
             process.env.SECRET_KEY,
-            { expiresIn: '1d' }
+            {expiresIn: '1d'}
         );
-
 
 
         return res.status(200).json(
@@ -187,7 +184,7 @@ userRouter.get("/email/confirm/:token", async (req, res) => {
         }))
     }
 
-    await db.update(UserTable).set({ isVerified: true }).where(eq(UserTable.id, user.id));
+    await db.update(UserTable).set({isVerified: true}).where(eq(UserTable.id, user.id));
 
     return res.status(200).redirect(process.env.EMAIL_VERIFY_REDIRECT_LINK);
 });
@@ -199,25 +196,51 @@ userRouter.get("/isVerified", verifyJWT, async (req, res) => {
 
     const userId: any = jwt.verify(token, process.env.SECRET_KEY);
 
-    const userIsVerified = await db.query.UserTable.findFirst({ where: eq(UserTable.id, userId.id) });
+    const userIsVerified = await db.query.UserTable.findFirst({where: eq(UserTable.id, userId.id)});
 
     console.log(userIsVerified);
 
 
     if (userIsVerified?.isVerified) {
         return res.status(200).json(createResponse({
-            message: "User email is verified", data: {
-
-            }
+            message: "User email is verified", data: {}
         }))
     }
 
     return res.status(400).json(createResponse({
-        message: "User email is not verified", data: {
-
-        }
+        message: "User email is not verified", data: {}
     }))
-})
+});
+
+
+//api for user to follow a masjid (update the masjid_id inside user)
+
+userRouter.put("/masjidId", async (req, res) => {
+    const {id, masjidId} = req.body;
+
+    const user = await db.update(UserTable).set({masjid_id: masjidId}).where(eq(UserTable.id, id));
+
+    return res.json(createResponse({message: "Masjid id updated successfully", data: masjidId}))
+});
+
+
+userRouter.get("/masjidId/:id", async (req, res) => {
+    const {id} = req.params;
+
+    const userId = await db.select({id: UserTable.id}).from(UserTable).where(eq(UserTable.id, Number(id)));
+
+    console.log(userId);
+    if (userId.length == 0) {
+        return res.status(400).json(createResponse({message: "No user exists with this id", data: null}))
+    }
+    const masjidId = await db.select({masjid_id: UserTable.masjid_id}).from(UserTable).where(eq(UserTable.id, Number(id)));
+
+    console.log(masjidId)
+    if (!masjidId[0].masjid_id) {
+        return res.status(400).json(createResponse({message: "User has not followed a masjid", data: null}));
+    }
+    return res.json(createResponse({message: "received user masjid", data: masjidId[0].masjid_id}))
+});
 
 
 export default userRouter;
