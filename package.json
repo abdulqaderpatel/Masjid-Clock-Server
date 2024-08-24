@@ -28,7 +28,8 @@
     "mysql2": "^3.10.2",
     "nodemailer": "^6.9.14",
     "typescript": "^5.5.3",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.6",

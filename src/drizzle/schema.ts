@@ -8,6 +8,8 @@ import {
     varchar,
 } from "drizzle-orm/mysql-core";
 
+import {z} from 'zod'
+
 export const MasjidTable = mysqlTable("masjids", {
     id: int("id").autoincrement().primaryKey(),
     name: varchar("name", {length: 255}).notNull(),

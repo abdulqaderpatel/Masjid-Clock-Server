@@ -9,6 +9,8 @@ import * as nodemailer from "nodemailer";
 import * as jwt from 'jsonwebtoken'
 import createResponse from "../models/CreateResponse";
 import verifyJWT from "../utils/jwt_authentication";
+import {userSchema} from "../drizzle/migrations/validationSchema";
+import {z} from "zod";
 
 const upload = multer({dest: "uploads/"});
 const userRouter = express.Router();
@@ -16,19 +18,30 @@ const userRouter = express.Router();
 
 //register the user
 userRouter.post('/register', async (req: Request, res: Response) => {
-    const {name, email, password, address, country, state, city} = req.body;
-
     try {
+        // Validate the request body against the Zod schema
+        const parsedData = userSchema.parse(req.body);
+
+        const {name, email, password, address, country, state, city} = parsedData;
+
+        // Check if the user already exists
         const userExists = await db.query.UserTable.findFirst({
             where: eq(UserTable.email, email),
         });
 
         if (userExists) {
-            throw Error("A user with this email already exists")
+            return res.status(400).json(
+                createResponse({
+                    message: "A user with this email already exists",
+                    data: {},
+                })
+            );
         }
 
+        // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Insert the user into the database
         const user = await db.insert(UserTable).values({
             name,
             email,
@@ -37,13 +50,11 @@ userRouter.post('/register', async (req: Request, res: Response) => {
             country,
             state,
             city,
-
-        })
-
-        console.log(user);
+        });
 
         const id = user[0].insertId;
 
+        // Set up nodemailer transport
         const smtpTransport = nodemailer.createTransport({
             service: 'Gmail',
             auth: {
@@ -52,9 +63,7 @@ userRouter.post('/register', async (req: Request, res: Response) => {
             },
         });
 
-        console.log("timepas");
-
-
+        // Create a JWT token
         const emailToken = jwt.sign(
             {
                 id,
@@ -64,22 +73,22 @@ userRouter.post('/register', async (req: Request, res: Response) => {
                 country,
                 state,
                 city,
-                isVerified: false
-
+                isVerified: false,
             },
             process.env.SECRET_KEY,
             {expiresIn: '1d'}
         );
 
+        // Send verification email
         const url = `http://localhost:3001/api/user/email/confirm/${emailToken}`;
-
-        smtpTransport.sendMail({
+        await smtpTransport.sendMail({
             from: process.env.EMAIL_USER,
             to: email,
             subject: 'Verify your email',
             html: `<p>Click on the link below to verify</p><br><a href="${url}">${url}</a>`,
         });
 
+        // Respond with success
         return res.status(201).json(
             createResponse({
                 message: 'User created successfully',
@@ -87,17 +96,25 @@ userRouter.post('/register', async (req: Request, res: Response) => {
             })
         );
     } catch (error: any) {
+        console.log(error)
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(
+                createResponse({
+                    message: "Validation failed",
+                    data: error.errors, // Provide validation error details
+                })
+            );
+        }
+
+        // Handle other errors
         return res.status(400).json(
             createResponse({
-
                 message: error.message,
                 data: {},
             })
         );
-
     }
 });
-
 
 //login the user
 userRouter.post('/login', async (req: Request, res: Response) => {
