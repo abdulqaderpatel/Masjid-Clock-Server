@@ -2,26 +2,6 @@
   "version": "7",
   "dialect": "mysql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "5",
-      "when": 1721381992727,
-      "tag": "0000_eminent_toxin",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1723829584400,
-      "tag": "0001_eminent_victor_mancha",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1723830107065,
-      "tag": "0002_lying_shiver_man",
-      "breakpoints": true
-    }
+    
   ]
 }
